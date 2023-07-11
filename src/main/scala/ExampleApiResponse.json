@@ -1,0 +1,262 @@
+{
+  "analyzedAt": "2022-07-06T21:01:30.089Z",
+  "collected": {
+    "metadata": {
+      "name": "hashy",
+      "scope": "unscoped",
+      "version": "0.11.1",
+      "description": "Hash passwords the right way (Argon2 & bcrypt support)",
+      "keywords": [
+        "argon2",
+        "bcrypt",
+        "hash",
+        "hashing",
+        "password"
+      ],
+      "date": "2022-07-06T07:32:46.721Z",
+      "author": {
+        "name": "Julien Fontanet",
+        "email": "julien.fontanet@isonoe.net",
+        "url": "http://julien.isonoe.net",
+        "username": "julien-f"
+      },
+      "publisher": {
+        "username": "julien-f",
+        "email": "julien.fontanet@isonoe.net"
+      },
+      "maintainers": [
+        {
+          "username": "julien-f",
+          "email": "julien.fontanet@isonoe.net"
+        },
+        {
+          "username": "marsaud",
+          "email": "marsaud.fabrice@neuf.fr"
+        },
+        {
+          "username": "pdonias",
+          "email": "pierre.donias@gmail.com"
+        }
+      ],
+      "repository": {
+        "type": "git",
+        "url": "git+https://github.com/JsCommunity/hashy.git"
+      },
+      "links": {
+        "npm": "https://www.npmjs.com/package/hashy",
+        "homepage": "https://github.com/JsCommunity/hashy",
+        "repository": "https://github.com/JsCommunity/hashy",
+        "bugs": "https://github.com/JsCommunity/hashy/issues"
+      },
+      "license": "MIT",
+      "dependencies": {
+        "argon2": "^0.28.5",
+        "bcryptjs": "^2.4.3",
+        "exec-promise": "^0.7.0",
+        "promise-toolbox": "^0.21.0",
+        "yargs": "^16.2.0"
+      },
+      "devDependencies": {
+        "eslint": "^7.32.0",
+        "eslint-config-prettier": "^6.4.0",
+        "eslint-config-standard": "^14.1.0",
+        "eslint-plugin-import": "^2.16.0",
+        "eslint-plugin-node": "^11.0.0",
+        "eslint-plugin-promise": "^5.2.0",
+        "eslint-plugin-standard": "^4.0.0",
+        "husky": "^4.3.5",
+        "lint-staged": "^9.4.2",
+        "prettier": "^2.5.1",
+        "tap": "^15.1.6"
+      },
+      "releases": [
+        {
+          "from": "2022-06-06T00:00:00.000Z",
+          "to": "2022-07-06T00:00:00.000Z",
+          "count": 0
+        },
+        {
+          "from": "2022-04-07T00:00:00.000Z",
+          "to": "2022-07-06T00:00:00.000Z",
+          "count": 0
+        },
+        {
+          "from": "2022-01-07T00:00:00.000Z",
+          "to": "2022-07-06T00:00:00.000Z",
+          "count": 1
+        },
+        {
+          "from": "2021-07-06T00:00:00.000Z",
+          "to": "2022-07-06T00:00:00.000Z",
+          "count": 1
+        },
+        {
+          "from": "2020-07-06T00:00:00.000Z",
+          "to": "2022-07-06T00:00:00.000Z",
+          "count": 3
+        }
+      ],
+      "hasTestScript": true,
+      "hasSelectiveFiles": true,
+      "readme": "# Hashy\n\n[![Node compatibility](https://badgen.net/npm/node/hashy)](https://npmjs.org/package/hashy) [![License](https://badgen.net/npm/license/hashy)](https://npmjs.org/package/hashy) [![PackagePhobia](https://badgen.net/packagephobia/install/hashy)](https://packagephobia.now.sh/result?p=hashy)\n\n[![Package Version](https://badgen.net/npm/v/hashy)](https://npmjs.org/package/hashy) [![Build Status](https://travis-ci.org/JsCommunity/hashy.png?branch=master)](https://travis-ci.org/JsCommunity/hashy) [![Latest Commit](https://badgen.net/github/last-commit/JsCommunity/hashy)](https://github.com/JsCommunity/hashy/commits/master)\n\n> Hash passwords the right way (Argon2 & bcrypt support)\n\nHashy is small [Node.js](http://nodejs.org/) library which aims to do\npasswords hashing _[the correct\nway](https://wiki.php.net/rfc/password_hash)_.\n\nIt has been heavily inspired by the new [PHP password hashing\nAPI](http://www.php.net/manual/en/book.password.php) but, following\nthe Node.js philosophy, hashing is done asynchronously.\n\nFurthermore, to make the interfaces as easy to use as possible, async\nfunctions can either be used with callbacks or they return\n[promises](https://en.wikipedia.org/wiki/Promise_%28programming%29)\nwhich will make them super easy to work with [async functions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function)!\n\nSupported algorithms:\n\n- [Argon2](https://en.wikipedia.org/wiki/Argon2)\n- [bcrypt](https://en.wikipedia.org/wiki/Bcrypt)\n\n## Why a new library?\n\nThe other ones I found were too complicated and/or were missing\nimportant features.\n\nThe main missing feature is the `needRehash()` function: cryptography\nis a fast-moving science and algorithms can quickly become obsolete or\ntheir parameters needs to be adjusted to compensate the performance\nincrease of recent computers (e.g. [bcrypt cost\nfactor](http://phpmaster.com/why-you-should-use-bcrypt-to-hash-stored-passwords/)).\n\nThis is exactly what this function is for: checking whether a hash\nuses the correct algorithm (and options) to see if we need to compute\na new hash for this password.\n\n## Install\n\nInstallation of the npm package:\n\n```\n> npm install --save hashy\n```\n\nHashy requires promises support, for Node versions prior to 0.12 [see\nthis page](https://github.com/JsCommunity/promise-toolbox#usage) to\nenable them.\n\n## How to use it?\n\nFirst, you may take a look at examples: using [callbacks](https://github.com/JsCommunity/hashy/blob/master/examples/callbacks.js), [promises](https://github.com/JsCommunity/hashy/blob/master/examples/promises.js) or [async functions](https://github.com/JsCommunity/hashy/blob/master/examples/async.js) (requires Node >= 7.6).\n\n### Creating a hash\n\n```js\nhashy.hash(password, function (error, hash) {\n  if (error) {\n    return console.log(error);\n  }\n\n  console.log(\"generated hash: \", hash);\n});\n```\n\n`hash()` handles additionaly two parameters which may be passed before the callback:\n\n1. `algo`: which algorithm to use, it defaults to `'bcrypt'`;\n2. `options`: additional options for the current algorithm, for bcrypt\n   it defaults to `{cost: 10}.`.\n\n### Checking a password against a hash\n\n```js\nhashy.verify(password, hash, function (error, success) {\n  if (error) {\n    return console.error(err);\n  }\n\n  if (success) {\n    console.log(\"you are now authenticated!\");\n  } else {\n    console.warn(\"invalid password!\");\n  }\n});\n```\n\n### Getting information about a hash\n\n```js\nconst info = hashy.getInfo(hash);\n```\n\n### Checking whether a hash is up to date\n\nAs I said [earlier](#why-a-new-library), we must be able to check\nwhether the hash is up to date, i.e. if it has been generated by the\nlast algorithm available with the last set of options.\n\n```js\nif (hashy.needsRehash(hash)) {\n  // Rehash.\n}\n```\n\nIt handles the optional `algo` and `options` parameters like\n[`hash()`](#creating-a-hash).\n\n### Changing default options.\n\nThe default options for a given algorithm is available at `hashy.options[&gt;algo&lt;]`.\n\n```js\n// Sets the default cost for bcrypt to 12.\nhashy.options.bcrypt.cost = 12;\n```\n\n## Using promises\n\nSame interface as above but without the callbacks!\n\n```javascript\n// Hashing.\nhashy.hash(password).then(function (hash) {\n  console.log('generated hash:' hash)\n})\n\n// Checking.\nhashy.verify(password, hash).then(function (success) {\n  if (success) {\n    console.log('you are now authenticated!')\n  } else {\n    console.warn('invalid password!')\n  }\n})\n\n```\n\nAs you can see, you don't even have to handle errors if you don't want\nto!\n\n## Using async functions\n\n**Note:** only available since Node.js 7.6.\n\nSame interface as promises but much more similar to a synchronous\ncode!\n\n```javascript\n// Hashing.\n(async function () {\n  const hash = await hashy.hash(password);\n  console.log(\"generated hash:\", hash);\n})()(\n  // Checking.\n  async function () {\n    if (await hashy.verify(password, hash)) {\n      console.log(\"you are now authenticated!\");\n    } else {\n      console.warn(\"invalid password!\");\n    }\n  }\n)();\n```\n\n## Contributing\n\nContributions are _very_ welcome, either on the documentation or on\nthe code.\n\nYou may:\n\n- report any [issue](https://github.com/JsCommunity/hashy/issues)\n  you've encountered;\n- fork and create a pull request.\n\n## License\n\nHashy is released under the [MIT\nlicense](https://en.wikipedia.org/wiki/MIT_License)."
+    },
+    "npm": {
+      "downloads": [
+        {
+          "from": "2022-07-05T00:00:00.000Z",
+          "to": "2022-07-06T00:00:00.000Z",
+          "count": 91
+        },
+        {
+          "from": "2022-06-29T00:00:00.000Z",
+          "to": "2022-07-06T00:00:00.000Z",
+          "count": 695
+        },
+        {
+          "from": "2022-06-06T00:00:00.000Z",
+          "to": "2022-07-06T00:00:00.000Z",
+          "count": 3244
+        },
+        {
+          "from": "2022-04-07T00:00:00.000Z",
+          "to": "2022-07-06T00:00:00.000Z",
+          "count": 9226
+        },
+        {
+          "from": "2022-01-07T00:00:00.000Z",
+          "to": "2022-07-06T00:00:00.000Z",
+          "count": 14500
+        },
+        {
+          "from": "2021-07-06T00:00:00.000Z",
+          "to": "2022-07-06T00:00:00.000Z",
+          "count": 23662
+        }
+      ],
+      "starsCount": 1
+    },
+    "github": {
+      "starsCount": 7,
+      "forksCount": 1,
+      "subscribersCount": 2,
+      "issues": {
+        "count": 44,
+        "openCount": 5,
+        "distribution": {
+          "3600": 5,
+          "10800": 2,
+          "32400": 0,
+          "97200": 6,
+          "291600": 3,
+          "874800": 2,
+          "2624400": 4,
+          "7873200": 7,
+          "23619600": 7,
+          "70858800": 4,
+          "212576400": 4
+        },
+        "isDisabled": false
+      },
+      "contributors": [
+        {
+          "username": "greenkeeperio-bot",
+          "commitsCount": 9
+        },
+        {
+          "username": "julien-f",
+          "commitsCount": 133
+        }
+      ],
+      "commits": [
+        {
+          "from": "2022-06-29T00:00:00.000Z",
+          "to": "2022-07-06T00:00:00.000Z",
+          "count": 4
+        },
+        {
+          "from": "2022-06-06T00:00:00.000Z",
+          "to": "2022-07-06T00:00:00.000Z",
+          "count": 4
+        },
+        {
+          "from": "2022-04-07T00:00:00.000Z",
+          "to": "2022-07-06T00:00:00.000Z",
+          "count": 4
+        },
+        {
+          "from": "2022-01-07T00:00:00.000Z",
+          "to": "2022-07-06T00:00:00.000Z",
+          "count": 8
+        },
+        {
+          "from": "2021-07-06T00:00:00.000Z",
+          "to": "2022-07-06T00:00:00.000Z",
+          "count": 8
+        }
+      ]
+    },
+    "source": {
+      "files": {
+        "readmeSize": 5348,
+        "testsSize": 3659
+      },
+      "badges": [
+        {
+          "urls": {
+            "original": "https://travis-ci.org/JsCommunity/hashy.png?branch=master",
+            "service": "https://api.travis-ci.org/JsCommunity/hashy.svg?branch=master",
+            "shields": "https://img.shields.io/travis/JsCommunity/hashy/master.svg",
+            "content": "https://img.shields.io/travis/JsCommunity/hashy/master.json"
+          },
+          "info": {
+            "service": "travis",
+            "type": "build",
+            "modifiers": {
+              "branch": "master"
+            }
+          }
+        }
+      ],
+      "linters": [
+        "editorconfig",
+        "eslint",
+        "prettier"
+      ],
+      "outdatedDependencies": {
+        "yargs": {
+          "required": "^16.2.0",
+          "stable": "17.5.1",
+          "latest": "17.5.1"
+        }
+      }
+    }
+  },
+  "evaluation": {
+    "quality": {
+      "carefulness": 0.45999999999999996,
+      "tests": 0.6,
+      "health": 0.75,
+      "branding": 0.15
+    },
+    "popularity": {
+      "communityInterest": 13,
+      "downloadsCount": 3075.3333333333335,
+      "downloadsAcceleration": 14.75852359208524,
+      "dependentsCount": 0
+    },
+    "maintenance": {
+      "releasesFrequency": 0.3113013698630137,
+      "commitsFrequency": 0.7565753424657534,
+      "openIssues": 1,
+      "issuesDistribution": 0
+    }
+  },
+  "score": {
+    "final": 0.5015136709894664,
+    "detail": {
+      "quality": 0.8305069944812928,
+      "popularity": 0.07422949530546788,
+      "maintenance": 0.6468035693947568
+    }
+  }
+}
