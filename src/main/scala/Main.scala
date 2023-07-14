@@ -11,8 +11,10 @@ import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import GraphDSL.Implicits._
 
-import scala.collection.mutable
+import java.io.{FileWriter, PrintWriter}
+import java.nio.file.StandardOpenOption.{APPEND, CREATE, WRITE}
 import scala.collection.mutable.ListBuffer
+import scala.reflect.io.File
 
 
 object Main extends App{
@@ -28,7 +30,7 @@ object Main extends App{
     json
   }
 
-  implicit val actorSystem: ActorSystem = ActorSystem("Exercise2")
+  implicit val actorSystem: ActorSystem = ActorSystem("PackagesTriage")
   implicit val dispatcher: ExecutionContextExecutor = actorSystem.dispatcher
 
   val path = Paths.get("src/main/resources/packages.txt.gz")
@@ -62,20 +64,20 @@ object Main extends App{
         def filterStars(): Flow[Information,Information,NotUsed] =
           Flow[Information].filter(
             information =>  {
-              information.stars() > minstars || println(s"discarding package ${information.name} because it has ${information.stars()} stars") == ""
+              information.stars() > minstars /*|| println(s"discarding package ${information.name} because it has ${information.stars()} stars") == ""*/
               //The print(``) == "" will always be false this because we just want to print if the criteria fails
             }
         )
         def filterTests(): Flow[Information, Information, NotUsed] =
           Flow[Information].filter(
-            i => {i.testCoverage() > mintestCoverage ||  println(s"discarding package ${i.name} because it has ${i.testCoverage()} coverage")  == "" }
-        )
+            i => i.testCoverage() > mintestCoverage) /*||  println(s"discarding package ${i.name} because it has ${i.testCoverage()} coverage")  == "" }*/
+
         def filterReleases(): Flow[Information, Information, NotUsed] =
           Flow[Information].filter(
-            i => { i.releases() > minReleases ||  println(s"discarding package ${i.name} because it has ${i.releases()} releases")  == ""})
+            i =>  i.releases() > minReleases) /*||  println(s"discarding package ${i.name} because it has ${i.releases()} releases")  == ""})*/
         def filterCommits(): Flow[Information, Information, NotUsed] =
           Flow[Information].filter(
-            i => { i.sumCommitsTop3Contributors() > minCommitsTop3 ||  println(s"discarding package ${i.name} because it has ${i.sumCommitsTop3Contributors()} sum of commits")  == "" })
+            i =>  i.sumCommitsTop3Contributors() > minCommitsTop3) /*||  println(s"discarding package ${i.name} because it has ${i.sumCommitsTop3Contributors()} sum of commits")  == "" })*/
 
         def filterPipeline(): Flow[Information,Information,NotUsed] = filterStars().via(filterTests()).via(filterReleases()).via(filterCommits())
 
@@ -92,19 +94,29 @@ object Main extends App{
     }
   )
 
-
   val collectPackagesSink: Sink[Information, Future[ListBuffer[Information]]] =
     Sink.fold[ListBuffer[Information], Information](ListBuffer.empty[Information])((buffer, info) =>  buffer += info)
 
-   val finalGraph: RunnableGraph[Future[IOResult]] =
+
+  val flowToByteString: Flow[Information, ByteString, NotUsed] = Flow[Information].map(information => {ByteString(s"${information.name}\n")})
+
+
+  def clearFile(path:String) = new FileWriter(path).close()
+  val pathResultsFile = "src/main/resources/acceptedPackages.txt"
+
+  val sinkToFile: Sink[ByteString, Future[IOResult]] =
+    FileIO.toPath(Paths.get(pathResultsFile), Set(CREATE, WRITE, APPEND))
+
+  val finalGraph: RunnableGraph[Future[IOResult]] =
     BufferedThrottledPackagesSource
       .via(ApiCallFlow)
       .via(flowPackages)
-      .to(collectPackagesSink)
+      .via(flowToByteString)
+      .to(sinkToFile)
 
 
   def main() ={
-    println("Wait until end of process to see  all succeeded packages\n")
+    clearFile(pathResultsFile)
     finalGraph.run()
   }
 
