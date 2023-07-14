@@ -54,29 +54,34 @@ object Main extends App{
   val flowPackages: Graph[FlowShape[Information, Information], NotUsed] = Flow.fromGraph(
     GraphDSL.create() {
       implicit builder =>
+        val minstars = 20
+        val mintestCoverage = 0.5
+        val minReleases = 2
+        val minCommitsTop3 = 150
 
         def filterStars(): Flow[Information,Information,NotUsed] =
           Flow[Information].filter(
             information =>  {
-              information.stars() > 20 || println(s"discarded package ${information.name} because it has ${information.stars()} stars\n") == ""
+              information.stars() > minstars || println(s"discarding package ${information.name} because it has ${information.stars()} stars") == ""
+              //The print(``) == "" will always be false this because we just want to print if the criteria fails
             }
         )
         def filterTests(): Flow[Information, Information, NotUsed] =
           Flow[Information].filter(
-            i => {i.testCoverage() > 0.5 ||  println(s"discarded package ${i.name} because it has ${i.testCoverage()} coverage\n")  == "" }
+            i => {i.testCoverage() > mintestCoverage ||  println(s"discarding package ${i.name} because it has ${i.testCoverage()} coverage")  == "" }
         )
         def filterReleases(): Flow[Information, Information, NotUsed] =
           Flow[Information].filter(
-            i => { i.releases() > 2 ||  println(s"discarded package ${i.name} because it has ${i.releases()} releases\n")  == ""})
+            i => { i.releases() > minReleases ||  println(s"discarding package ${i.name} because it has ${i.releases()} releases")  == ""})
         def filterCommits(): Flow[Information, Information, NotUsed] =
           Flow[Information].filter(
-            i => { i.sumCommitsTop3Contributors() > 150 ||  println(s"discarded package ${i.name} because it has ${i.sumCommitsTop3Contributors()} sumcommits\n")  == "" })
+            i => { i.sumCommitsTop3Contributors() > minCommitsTop3 ||  println(s"discarding package ${i.name} because it has ${i.sumCommitsTop3Contributors()} sum of commits")  == "" })
 
         def filterPipeline(): Flow[Information,Information,NotUsed] = filterStars().via(filterTests()).via(filterReleases()).via(filterCommits())
 
         val balance = builder.add(Balance[Information](3))
         val merge = builder.add(Merge[Information](3))
-        val flowOut: Flow[Information, Information, NotUsed] = Flow[Information].map(I => I)
+        val flowOut: Flow[Information, Information, NotUsed] = Flow[Information].map({I => println(s"succeed package ${I.name}");I})
         val toFlow = builder.add(flowOut)
 
         balance ~> filterPipeline() ~> merge
@@ -87,10 +92,9 @@ object Main extends App{
     }
   )
 
-  val informationPrintSink:Sink[Information,Future[Done]] = Sink.foreach(i => println(s"succeed criteria ${i.name}"))
 
   val collectPackagesSink: Sink[Information, Future[ListBuffer[Information]]] =
-    Sink.fold[ListBuffer[Information], Information](ListBuffer.empty[Information])((buffer, info) => {println(s"succeed criteria ${info.name}"); buffer += info})
+    Sink.fold[ListBuffer[Information], Information](ListBuffer.empty[Information])((buffer, info) =>  buffer += info)
 
    val finalGraph: RunnableGraph[Future[IOResult]] =
     BufferedThrottledPackagesSource
@@ -98,7 +102,13 @@ object Main extends App{
       .via(flowPackages)
       .to(collectPackagesSink)
 
-  finalGraph.run()
+
+  def main() ={
+    println("Wait until end of process to see  all succeeded packages\n")
+    finalGraph.run()
+  }
+
+  main()
 
 }
 
