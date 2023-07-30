@@ -1,22 +1,17 @@
 
 import akka.actor.ActorSystem
-import akka.stream.scaladsl.{Balance, Compression, FileIO, Flow, Framing, GraphDSL, Merge, RunnableGraph, Sink, Source}
+import akka.stream.scaladsl.GraphDSL.Implicits._
+import akka.stream.scaladsl.{Balance, Broadcast, Compression, FileIO, Flow, Framing, GraphDSL, Merge, RunnableGraph, Sink, Source}
 import akka.stream.{FlowShape, Graph, IOResult, OverflowStrategy}
 import akka.util.ByteString
 import akka.{Done, NotUsed}
 import play.api.libs.json.{JsValue, Json}
 
-import java.nio.file.Paths
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, ExecutionContextExecutor, Future}
-import GraphDSL.Implicits._
-import akka.actor.Status.{Failure, Success}
-
 import java.io.FileWriter
+import java.nio.file.Paths
 import java.nio.file.StandardOpenOption.{APPEND, CREATE, WRITE}
-import scala.collection.mutable.ListBuffer
-import scala.concurrent.duration.Duration
-import scala.reflect.runtime.universe.Try
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 object Main extends App{
   case class Package(name: String)
@@ -24,7 +19,6 @@ object Main extends App{
   // Requests a package to the API and returns the information about that package
   // Change this code at your convenience
   def apiRequest(packageObj: Package): JsValue = {
-   // println(s"Analysing ${packageObj.name}")
     val url = s"https://api.npms.io/v2/package/${packageObj.name}"
     val response = requests.get(url)
     val json: JsValue = Json.parse(response.data.toString)
@@ -41,9 +35,8 @@ object Main extends App{
     Flow[ByteString].via(Framing.delimiter(ByteString("\n"), 1024, true).map(b => Package(b.utf8String)))
 
 
-  val printSink:Sink[Package,Future[Done]] = Sink.foreach(p => {println(s"$p")})
-  val printPackagesgraph = sourceByteString.via(flowUnzip).via(flowToPackage).to(printSink)
-  // printPackagesgraph.run()
+
+
 
   val PackagesSource:Source[Package,Future[IOResult]] =  sourceByteString.via(flowUnzip).via(flowToPackage)
   val BufferedThrottledPackagesSource = PackagesSource.buffer(25, OverflowStrategy.backpressure).throttle(1, 2.seconds)
@@ -65,24 +58,23 @@ object Main extends App{
         def filterStars(): Flow[Information,Information,NotUsed] =
           Flow[Information].filter(
             information =>  {
-              information.stars() > minstars /*|| println(s"discarding package ${information.name} because it has ${information.stars()} stars") == ""*/
-              //The print(``) == "" will always be false this because we just want to print if the criteria fails
+              information.stars() > minstars
             }
         )
         def filterTests(): Flow[Information, Information, NotUsed] =
           Flow[Information].filter(
-            i => i.testCoverage() > mintestCoverage) /*||  println(s"discarding package ${i.name} because it has ${i.testCoverage()} coverage")  == "" }*/
+            i => i.testCoverage() > mintestCoverage)
 
         def filterReleases(): Flow[Information, Information, NotUsed] =
           Flow[Information].filter(
-            i =>  i.releases() > minReleases) /*||  println(s"discarding package ${i.name} because it has ${i.releases()} releases")  == ""})*/
+            i =>  i.releases() > minReleases)
         def filterCommits(): Flow[Information, Information, NotUsed] =
           Flow[Information].filter(
-            i =>  i.sumCommitsTop3Contributors() > minCommitsTop3) /*||  println(s"discarding package ${i.name} because it has ${i.sumCommitsTop3Contributors()} sum of commits")  == "" })*/
-
+            i =>  i.sumCommitsTop3Contributors() > minCommitsTop3)
         def filterPipeline(): Flow[Information,Information,NotUsed] = filterStars().via(filterTests()).via(filterReleases()).via(filterCommits())
-
-        val balance = builder.add(Balance[Information](3))
+        //Here a balancer would make more sense than a broadcaster as the pipelines are the same.
+        //Using a broadcast has the effect that each package will be outputted 3 times from this graph
+        val balance = builder.add(Broadcast[Information](3))
         val merge = builder.add(Merge[Information](3))
         val flowOut: Flow[Information, Information, NotUsed] = Flow[Information].map({I => println(s"succeed package ${I.name}");I})
         val toFlow = builder.add(flowOut)
@@ -95,12 +87,7 @@ object Main extends App{
     }
   )
 
-  val collectPackagesSink: Sink[Information, Future[ListBuffer[Information]]] =
-    Sink.fold[ListBuffer[Information], Information](ListBuffer.empty[Information])((buffer, info) =>  buffer += info)
-
-
   val flowToByteString: Flow[Information, ByteString, NotUsed] = Flow[Information].map(information => {ByteString(s"${information.name}\n")})
-
 
   def clearFile(path:String) = new FileWriter(path).close()
   val pathResultsFile = "src/main/resources/acceptedPackages.txt"

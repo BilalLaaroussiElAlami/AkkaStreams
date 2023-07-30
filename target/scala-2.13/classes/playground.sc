@@ -1,3 +1,0 @@
-
-
-false || println("ok") == "bla"
