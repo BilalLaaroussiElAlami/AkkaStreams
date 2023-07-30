@@ -35,9 +35,6 @@ object Main extends App{
     Flow[ByteString].via(Framing.delimiter(ByteString("\n"), 1024, true).map(b => Package(b.utf8String)))
 
 
-
-
-
   val PackagesSource:Source[Package,Future[IOResult]] =  sourceByteString.via(flowUnzip).via(flowToPackage)
   val BufferedThrottledPackagesSource = PackagesSource.buffer(25, OverflowStrategy.backpressure).throttle(1, 2.seconds)
   //PackagesSource.to(printSink).run()
@@ -74,16 +71,16 @@ object Main extends App{
         def filterPipeline(): Flow[Information,Information,NotUsed] = filterStars().via(filterTests()).via(filterReleases()).via(filterCommits())
         //Here a balancer would make more sense than a broadcaster as the pipelines are the same.
         //Using a broadcast has the effect that each package will be outputted 3 times from this graph
-        val balance = builder.add(Broadcast[Information](3))
+        val broadcast = builder.add(Broadcast[Information](3))
         val merge = builder.add(Merge[Information](3))
         val flowOut: Flow[Information, Information, NotUsed] = Flow[Information].map({I => println(s"succeed package ${I.name}");I})
         val toFlow = builder.add(flowOut)
 
-        balance ~> filterPipeline() ~> merge
-        balance ~> filterPipeline() ~> merge
-        balance ~> filterPipeline() ~> merge ~> toFlow
+        broadcast ~> filterPipeline() ~> merge
+        broadcast ~> filterPipeline() ~> merge
+        broadcast ~> filterPipeline() ~> merge ~> toFlow
 
-        FlowShape(balance.in, toFlow.out)
+        FlowShape(broadcast.in, toFlow.out)
     }
   )
 

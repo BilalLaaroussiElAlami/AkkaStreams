@@ -1,4 +1,12 @@
 hexo-cli
+hexo-cli
+hexo-cli
+dcl
+dcl
 dcl
 krb5
+krb5
+krb5
+lower-case
+lower-case
 lower-case
